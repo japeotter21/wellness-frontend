@@ -9,11 +9,14 @@ export default function Home() {
     const [sleep, setSleep] = useState(0)
     const [wakeUp, setWakeUp] = useState('')
     const [quality, setQuality] = useState(0)
+    const [drinks, setDrinks] = useState(0)
+    const [drankAt, setDrankAt] = useState('')
     const [showData, setShowData] = useState(false)
     const [allData, setAllData] = useState({})
     const cModal = typeof document !== 'undefined' && document.getElementById("caffeinemodal")
     const sModal = typeof document !== 'undefined' && document.getElementById("sleepmodal")
     const wModal = typeof document !== 'undefined' && document.getElementById("watermodal")
+    const aModal = typeof document !== 'undefined' && document.getElementById("alcoholmodal")
 
     function PostCaf() {
         const postObj = {
@@ -38,12 +41,27 @@ export default function Home() {
             CloseModal(wModal)
         })
     }
+    
+
+    function PostAlcohol() {
+        const postObj = {
+            drinks: parseInt(drinks),
+            drankAt: new Date(drankAt).toISOString()
+        }
+        axios.post('http://127.0.0.1:8000/alcohol/', postObj)
+        .then(res => {
+            console.log(res.data)
+            setDrinks(0)
+            setDrankAt('')
+            CloseModal(aModal)
+        })
+    }
 
     function PostSleep() {
         const postObj = {
             hours: parseInt(sleep),
             quality: parseInt(quality),
-            awake: wakeUp
+            awake: new Date(wakeUp).toISOString()
         }
         axios.post('http://127.0.0.1:8000/sleep/', postObj)
         .then(res => {
@@ -56,15 +74,17 @@ export default function Home() {
     }
 
     function GetData() {
-        axios.all(['http://127.0.0.1:8000/sleep','http://127.0.0.1:8000/caffeine','http://127.0.0.1:8000/water'].map(url=>axios.get(url)))
-        .then(axios.spread((slp, caf, wat)=>{
+        axios.all(['http://127.0.0.1:8000/sleep','http://127.0.0.1:8000/caffeine','http://127.0.0.1:8000/water','http://127.0.0.1:8000/alcohol'].map(url=>axios.get(url)))
+        .then(axios.spread((slp, caf, wat, alc)=>{
             const slpField = slp.data
             const cafField = caf.data
             const watField = wat.data
+            const alcField = alc.data
             setAllData({
                 sleep: slpField,
                 caffeine: cafField,
-                water: watField
+                water: watField,
+                alcohol: alcField
             })
             setShowData(true)
         }))
@@ -74,7 +94,6 @@ export default function Home() {
         obj.close()
         setCaffeine(0)
     }
-    console.log(wakeUp)
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-between xl:p-24 pt-24 bg-gradient-radial from-slate-700 to-slate-500 text-white font-sans">
@@ -110,7 +129,9 @@ export default function Home() {
                     <p>Glasses.png</p>
                     <p className='font-light text-sm'>Focus</p>
                 </button>
-                <button className='flex flex-col items-center bg-gradient-radial from-red-500 to-red-400 rounded-bl-md px-6 py-12'>
+                <button className='flex flex-col items-center bg-gradient-radial from-red-500 to-red-400 rounded-bl-md px-6 py-12'
+                    onClick={()=>aModal.showModal()}
+                >
                     <p>Bottle.png</p>
                     <p className='font-light text-sm'>Alcohol</p>
                 </button>
@@ -186,6 +207,27 @@ export default function Home() {
                     <div className='flex justify-between items-center mt-4'>
                         <button onClick={()=>CloseModal(sModal)}>Close</button>
                         <button onClick={PostSleep}>Submit</button>
+                    </div>
+                </div>
+            </dialog>
+            <dialog id="alcoholmodal">
+                <div className='p-4 flex flex-col gap-4'>
+                    <h3 className='text-lg'>Alcohol:</h3>
+                    <div>
+                        <p className='text-sm text-neutral-500'>Drinks</p>
+                        <input type="number" className='border px-3 py-2 rounded-md' value={drinks}
+                            onChange={(e)=>setDrinks(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <p className='text-sm text-neutral-500'>Drank at:</p>
+                    <input type="datetime-local" className='border px-3 py-2 rounded-md w-full' value={drankAt}
+                        onChange={(e)=>setDrankAt(e.target.value)}
+                    />
+                    </div>
+                    <div className='flex justify-between items-center mt-4'>
+                        <button onClick={()=>CloseModal(aModal)}>Close</button>
+                        <button onClick={PostAlcohol}>Submit</button>
                     </div>
                 </div>
             </dialog>
