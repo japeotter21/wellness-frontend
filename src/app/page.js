@@ -23,6 +23,7 @@ export default function Home() {
         .then(res => {
             console.log(res.data)
             setCaffeine(0)
+            CloseModal(cModal)
         })
     }
 
@@ -34,6 +35,7 @@ export default function Home() {
         .then(res => {
             console.log(res.data)
             setWater(0)
+            CloseModal(wModal)
         })
     }
 
@@ -49,11 +51,12 @@ export default function Home() {
             setSleep(0)
             setQuality(0)
             setWakeUp('')
+            CloseModal(sModal)
         })
     }
 
     function GetData() {
-        axios.all(['http://127.0.0.1:8000/sleep','http://127.0.0.1:8000/caffeine','http://127.0.0.1:8000/caffeine'].map(url=>axios.get(url)))
+        axios.all(['http://127.0.0.1:8000/sleep','http://127.0.0.1:8000/caffeine','http://127.0.0.1:8000/water'].map(url=>axios.get(url)))
         .then(axios.spread((slp, caf, wat)=>{
             const slpField = slp.data
             const cafField = caf.data
