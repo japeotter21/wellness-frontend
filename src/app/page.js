@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react'
-import Image from 'next/image'
+import Link from 'next/link'
 import axios from 'axios'
 
 export default function Home() {
@@ -11,12 +11,35 @@ export default function Home() {
     const [quality, setQuality] = useState(0)
     const [drinks, setDrinks] = useState(0)
     const [drankAt, setDrankAt] = useState('')
-    const [showData, setShowData] = useState(false)
-    const [allData, setAllData] = useState({})
+    const [mood, setMood] = useState("S")
+    const [focus, setFocus] = useState(1)
+    const [screenTime, setScreenTime] = useState(0)
     const cModal = typeof document !== 'undefined' && document.getElementById("caffeinemodal")
     const sModal = typeof document !== 'undefined' && document.getElementById("sleepmodal")
     const wModal = typeof document !== 'undefined' && document.getElementById("watermodal")
     const aModal = typeof document !== 'undefined' && document.getElementById("alcoholmodal")
+    const mModal = typeof document !== 'undefined' && document.getElementById("moodmodal")
+    const fModal = typeof document !== 'undefined' && document.getElementById("focusmodal")
+    const tModal = typeof document !== 'undefined' && document.getElementById("screentimemodal")
+
+    const moodEnum = [
+        {
+            value: "S",
+            name: "Sleepy"
+        },
+        {
+            value: "T",
+            name: "Tired"
+        },
+        {
+            value: "W",
+            name: "Awake"
+        },
+        {
+            value: "A",
+            name: "Alert"
+        }
+    ]
 
     function PostCaf() {
         const postObj = {
@@ -56,10 +79,46 @@ export default function Home() {
             CloseModal(aModal)
         })
     }
+    
+    function PostMood() {
+        const postObj = {
+            mood: mood
+        }
+        axios.post('http://127.0.0.1:8000/mood/', postObj)
+        .then(res => {
+            console.log(res.data)
+            setMood('')
+            CloseModal(mModal)
+        })
+    }
+        
+    function PostFocus() {
+        const postObj = {
+            focus: parseInt(focus)
+        }
+        axios.post('http://127.0.0.1:8000/focus/', postObj)
+        .then(res => {
+            console.log(res.data)
+            setFocus(1)
+            CloseModal(fModal)
+        })
+    }
+            
+    function PostScreenTime() {
+        const postObj = {
+            hours: parseFloat(screenTime)
+        }
+        axios.post('http://127.0.0.1:8000/screentime/', postObj)
+        .then(res => {
+            console.log(res.data)
+            setScreenTime(0)
+            CloseModal(tModal)
+        })
+    }
 
     function PostSleep() {
         const postObj = {
-            hours: parseInt(sleep),
+            hours: parseFloat(sleep),
             quality: parseInt(quality),
             awake: new Date(wakeUp).toISOString()
         }
@@ -73,30 +132,13 @@ export default function Home() {
         })
     }
 
-    function GetData() {
-        axios.all(['http://127.0.0.1:8000/sleep','http://127.0.0.1:8000/caffeine','http://127.0.0.1:8000/water','http://127.0.0.1:8000/alcohol'].map(url=>axios.get(url)))
-        .then(axios.spread((slp, caf, wat, alc)=>{
-            const slpField = slp.data
-            const cafField = caf.data
-            const watField = wat.data
-            const alcField = alc.data
-            setAllData({
-                sleep: slpField,
-                caffeine: cafField,
-                water: watField,
-                alcohol: alcField
-            })
-            setShowData(true)
-        }))
-    }
-
     function CloseModal(obj) {
         obj.close()
         setCaffeine(0)
     }
 
     return (
-        <main className="flex min-h-screen flex-col items-center justify-between xl:p-24 pt-24 bg-gradient-radial from-slate-700 to-slate-500 text-white font-sans">
+        <main className="flex min-h-screen flex-col items-center gap-4 xl:p-24 pt-24 bg-gradient-radial from-slate-700 to-slate-500 text-white font-sans">
             <div className='grid grid-cols-2 xl:w-1/2 w-11/12'>
                 <button className='flex flex-col items-center bg-gradient-radial from-orange-500 to-amber-400 rounded-tl-md px-6 py-12'
                     onClick={()=>sModal.showModal()}
@@ -114,7 +156,9 @@ export default function Home() {
                     <p>Weights.png</p>
                     <p className='font-light text-sm'>Exercise</p>
                 </button>
-                <button className='flex flex-col items-center bg-gradient-radial from-green-500 to-emerald-400 px-6 py-12'>
+                <button className='flex flex-col items-center bg-gradient-radial from-green-500 to-emerald-400 px-6 py-12'
+                    onClick={()=>mModal.showModal()}
+                >
                     <p>Face.png</p>
                     <p className='font-light text-sm'>Mood</p>
                 </button>
@@ -125,6 +169,7 @@ export default function Home() {
                     <p className='font-light text-sm'>Water</p>
                 </button>
                 <button className='flex flex-col items-center bg-gradient-radial from-pink-500 to-pink-400 px-6 py-12'
+                    onClick={()=>fModal.showModal()}
                 >
                     <p>Glasses.png</p>
                     <p className='font-light text-sm'>Focus</p>
@@ -136,19 +181,17 @@ export default function Home() {
                     <p className='font-light text-sm'>Alcohol</p>
                 </button>
                 <button className='flex flex-col items-center bg-gradient-radial from-gray-500 to-gray-400 rounded-br-md px-6 py-12'
-                    onClick={GetData}
+                    onClick={()=>tModal.showModal()}
                 >
-                    <p>Chart.png</p>
-                    <p className='font-light text-sm'>All Stats</p>
+                    <p>Phone.png</p>
+                    <p className='font-light text-sm'>Screen Time</p>
                 </button>
             </div>
-            { showData ? 
-                <div className='w-3/4 break-words py-8'>
-                    {JSON.stringify(allData)}                    
-                </div>
-            :
-                <></>
-            }
+            <div className='xl:w-1/2 w-11/12 text-center'>
+                <Link href="/tracking">
+                    <p className='rounded-full px-4 py-2 bg-gradient-to-r from-purple-500 to-cyan-400 shadow-md'>Stats</p>
+                </Link>
+            </div>
             <dialog id="caffeinemodal">
                 <div className='p-4 flex flex-col gap-4'>
                     <h3 className='text-lg'>Caffeine Consumed:</h3>
@@ -184,7 +227,7 @@ export default function Home() {
                     <h3 className='text-lg'>Sleep:</h3>
                     <div>
                         <p className='text-sm text-neutral-500'>Hours</p>
-                        <input type="number" className='border px-3 py-2 rounded-md' value={sleep}
+                        <input type="number" step={0.25} className='border px-3 py-2 rounded-md' value={sleep}
                             onChange={(e)=>setSleep(e.target.value)}
                         />
                     </div>
@@ -228,6 +271,58 @@ export default function Home() {
                     <div className='flex justify-between items-center mt-4'>
                         <button onClick={()=>CloseModal(aModal)}>Close</button>
                         <button onClick={PostAlcohol}>Submit</button>
+                    </div>
+                </div>
+            </dialog>
+            <dialog id="moodmodal">
+                <div className='p-4 flex flex-col gap-4'>
+                    <h3 className='text-lg'>Mood:</h3>
+                    <div>
+                        <select type="number" className='border px-3 py-2 rounded-md w-full' value={mood}
+                            onChange={(e)=>setMood(e.target.value)}
+                        >
+                            {moodEnum.map((item,id)=>
+                                <option value={item.value} key={id}>{item.name}</option>
+                            )}
+                        </select>
+                    </div>
+                    <div className='flex justify-between items-center mt-4'>
+                        <button onClick={()=>CloseModal(mModal)}>Close</button>
+                        <button onClick={PostMood}>Submit</button>
+                    </div>
+                </div>
+            </dialog>
+            <dialog id="focusmodal">
+                <div className='p-4 flex flex-col gap-4'>
+                    <h3 className='text-lg'>Focus:</h3>
+                    <div>
+                        <p className='text-sm text-neutral-500'>Quality (1: worst - 5: best)</p>
+                        <select type="number" className='border px-3 py-2 rounded-md w-full' value={focus}
+                            onChange={(e)=>setFocus(e.target.value)}
+                        >
+                            {[1,2,3,4,5].map((item,id)=>
+                                <option value={item} key={id}>{item}</option>
+                            )}
+                        </select>
+                    </div>
+                    <div className='flex justify-between items-center mt-4'>
+                        <button onClick={()=>CloseModal(fModal)}>Close</button>
+                        <button onClick={PostFocus}>Submit</button>
+                    </div>
+                </div>
+            </dialog>
+            <dialog id="screentimemodal">
+                <div className='p-4 flex flex-col gap-4'>
+                    <h3 className='text-lg'>Screen Time:</h3>
+                    <div>
+                        <p className='text-sm text-neutral-500'>Hours</p>
+                        <input type="number" step={0.25} className='border px-3 py-2 rounded-md' value={screenTime}
+                            onChange={(e)=>setScreenTime(e.target.value)}
+                        />
+                    </div>
+                    <div className='flex justify-between items-center mt-4'>
+                        <button onClick={()=>CloseModal(tModal)}>Close</button>
+                        <button onClick={PostScreenTime}>Submit</button>
                     </div>
                 </div>
             </dialog>
